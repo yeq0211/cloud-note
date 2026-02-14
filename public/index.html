@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>私人云笔记</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; }
+        .hidden { display: none; }
+        .note-item { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 4px; display: flex; justify-content: space-between; }
+        button { cursor: pointer; padding: 5px 10px; }
+        .delete-btn { background: #ff4d4f; color: white; border: none; border-radius: 4px; }
+        input { padding: 8px; width: 70%; }
+    </style>
+</head>
+<body>
+
+    <div id="login-page">
+        <h1>🔐 请登录</h1>
+        <input type="text" id="username" placeholder="输入你的名字 (比如: alice)">
+        <button onclick="login()">进入笔记</button>
+    </div>
+
+    <div id="note-page" class="hidden">
+        <h1 id="welcome-msg">我的笔记</h1>
+        <button onclick="logout()" style="float:right">退出</button>
+        
+        <div style="margin: 20px 0;">
+            <input type="text" id="new-note" placeholder="写点什么...">
+            <button onclick="addNote()">添加</button>
+        </div>
+
+        <div id="note-list">
+            </div>
+    </div>
+
+    <script>
+        // const API_URL = 'http://localhost:3000/api';  <-- 删掉旧的
+const API_URL = '/api'; // <-- 改成新的（自动使用当前网站的地址）
+        let currentUser = null;
+
+        // 登录
+        async function login() {
+            const username = document.getElementById('username').value;
+            if(!username) return alert('名字不能为空');
+
+            const res = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            
+            const data = await res.json();
+            currentUser = data.token; // 拿到令牌
+            
+            // 切换界面
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('note-page').classList.remove('hidden');
+            document.getElementById('welcome-msg').innerText = `${currentUser} 的笔记`;
+            
+            loadNotes(); // 加载笔记
+        }
+
+        // 加载笔记
+        async function loadNotes() {
+            const res = await fetch(`${API_URL}/notes`, {
+                headers: { 'Authorization': currentUser } // 亮出令牌
+            });
+            const notes = await res.json();
+            
+            const list = document.getElementById('note-list');
+            list.innerHTML = notes.map(note => `
+                <div class="note-item">
+                    <span>${note.content}</span>
+                    <button class="delete-btn" onclick="deleteNote(${note.id})">删除</button>
+                </div>
+            `).join('');
+        }
+
+        // 添加笔记
+        async function addNote() {
+            const input = document.getElementById('new-note');
+            const content = input.value;
+            if(!content) return;
+
+            await fetch(`${API_URL}/notes`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': currentUser 
+                },
+                body: JSON.stringify({ content })
+            });
+
+            input.value = '';
+            loadNotes(); // 刷新列表
+        }
+
+        // 删除笔记
+        async function deleteNote(id) {
+            if(!confirm('确定删除吗？')) return;
+            await fetch(`${API_URL}/notes/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': currentUser }
+            });
+            loadNotes();
+        }
+
+        function logout() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
