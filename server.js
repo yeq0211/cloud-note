@@ -10,8 +10,8 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 
 // 👇 你的云端数据库连接密码（已填好）
-// 👇 这是一个手动拼接的直连地址，专治国内网络报错
-const MONGO_URL = "mongodb://yeq0211_db_user:jluSBo38nOFtIJtw@cluster0-shard-00-00.tapeiwd.mongodb.net:27017,cluster0-shard-00-01.tapeiwd.mongodb.net:27017,cluster0-shard-00-02.tapeiwd.mongodb.net:27017/?ssl=true&authSource=admin";
+// 👇 换回官方推荐的标准短链接（最适合 Render 云服务器）
+const MONGO_URL = "mongodb+srv://yeq0211_db_user:jluSBo38nOFtIJtw@cluster0.tapeiwd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // 1. 连接数据库
 mongoose.connect(MONGO_URL)
